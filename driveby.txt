@@ -1,0 +1,149 @@
+{$CLEO .cs}
+{$USE ini}
+{$USE cleo+}
+
+0000: 
+const   
+Door_lf_dummy    =  10
+_setVehicleAtomicInvisible = 0x6D3080
+_setVehicleAtomicVisible   = 0x6D30B0
+end
+
+0A8C: write_memory 0x522423 size 2 value 0x9090 virtual_protect 1  //camera rotate fix  
+
+0AF0: 8@ = get_int_from_ini_file "cleo\driveby.ini" section "MAIN" key "DrivebyAimButton"
+0AF0: 9@ = get_int_from_ini_file "cleo\driveby.ini" section "MAIN" key "RestoreCameraAfterDriveby"
+0AF0: 31@ = get_int_from_ini_file "cleo\driveby.ini" section "MAIN" key "PreLoadIFP"
+if 31@ == 1
+then
+    04ED: load_animation  "drivebys"
+end
+
+
+while true
+    wait 0
+    actor.Driving($player_actor)
+    jf continue
+    0@ = actor.CurrentCar($player_actor)
+    0A97: 1@ = car 0@ struct
+
+    if and
+    00DF:   actor $PLAYER_ACTOR driving
+    8241:   not player $PLAYER_CHAR in_remote_mode
+    then    
+        03C0: 25@ = store_car_char_is_in_no_save $PLAYER_ACTOR       
+        0EF9: get_car_animgroup 25@ store_to 23@
+        if and
+        not 23@ == 15 //coach 
+        not 23@ == 16 //bus   
+        not 23@ == 17 //dozer  
+        not 23@ == 18 //kart   
+        not 23@ == 23 //hover   
+        not 23@ == 24 //tank 
+        then  
+            if or
+            04C8:   actor $PLAYER_ACTOR driving_flying_vehicle 
+            04A7:   actor $PLAYER_ACTOR driving_boat
+            00DD:   actor $PLAYER_ACTOR driving_car_with_model 601 
+            then
+                goto @NoDriveBy
+            end
+        else
+            :NoDriveBy
+    		0A8C: write_memory 0x527862 size 2 value 0xC084 virtual_protect 1   //reenable CPad::GetLookLeft(void)
+            0A8C: write_memory 0x527894 size 2 value 0xC084 virtual_protect 1   //reenable CPad::GetLookRight(void)
+            while 00DF:   actor $PLAYER_ACTOR driving
+                wait 0
+                03C0: 24@ = store_car_char_is_in_no_save $PLAYER_ACTOR
+                if 803B:   not 24@ == 25@
+                then
+                    break
+                end 
+            end
+            continue
+        end  
+               
+        0E12: get_vehicle 25@ subclass_to 22@
+        if or
+        22@ == 3 //VEHICLE_HELI  
+        22@ == 4 //VEHICLE_PLANE 
+        22@ == 5 //VEHICLE_BOAT   
+        22@ == 6 //VEHICLE_TRAIN 
+        then
+            goto @NoDriveBy
+        end    
+        
+        046C: 24@ = car 25@ driver
+        if 87D6:   not 24@ == $PLAYER_ACTOR
+        then
+            goto @NoDriveBy
+        end
+        
+	    0A96: 24@ = actor $PLAYER_ACTOR struct
+        000A: 24@ += 0x718 //[byte] Current weapon slot (1 byte)
+        0A8D: 24@ = read_memory 24@ size 1 virtual_protect 1
+        24@ += 1
+	    04B8: get_char_weapon_in_slot $PLAYER_ACTOR slot 24@ store_weapon_to 26@ ammo_to 27@ model_to 31@
+	    
+	    if 
+        24@ == 1
+        then
+            0A8C: write_memory 0x527862 size 2 value 0xC084 virtual_protect 1  
+            0A8C: write_memory 0x527894 size 2 value 0xC084 virtual_protect 1  
+        else
+            0A8C: write_memory 0x527862 size 2 value 0x9090 virtual_protect 1 
+            0A8C: write_memory 0x527894 size 2 value 0x9090 virtual_protect 1 
+        end
+        
+            0AA6: call_method _setVehicleAtomicVisible struct 1@ num_params 1 pop 0 Door_lf_dummy
+	            if
+	             0AB0:  key_pressed 8@
+	            then
+	             if
+	             047A:   actor $PLAYER_ACTOR driving_bike
+	             then
+	             09C4: set_petrol_tank_weakpoint 25@ to false // Disables hitting petrol tank
+	             end
+                 0A96: 24@ = actor $PLAYER_ACTOR struct
+                 000A: 24@ += 0x718 //[byte] Current weapon slot (1 byte)
+                 0A8D: 24@ = read_memory 24@ size 1 virtual_protect 1
+                 24@ += 1
+	             04B8: get_char_weapon_in_slot $PLAYER_ACTOR slot 24@ store_weapon_to 26@ ammo_to 27@ model_to 31@
+                  
+					if and
+					27@ > 0
+					24@ == 5  // SMG Slot
+					then
+					0713: task_drive_by $PLAYER_ACTOR char -1 car -1 coord 0 0 0 radius 900.0 style 4 from_rhs 0 fire_rate 100				
+
+						while true
+						wait 0
+							if and 
+								8AB0: not key_pressed 8@
+                                0AA6: call_method _setVehicleAtomicInvisible struct 1@ num_params 1 pop 0 Door_lf_dummy 
+                                then
+								break
+							end
+							
+							0A96: 24@ = actor $PLAYER_ACTOR struct
+ 				            000A: 24@ += 0x718 //[byte] Current weapon slot (1 byte)
+ 				            0A8D: 24@ = read_memory 24@ size 1 virtual_protect 1
+  				            24@ += 1
+					        04B8: get_char_weapon_in_slot $PLAYER_ACTOR slot 24@ store_weapon_to 26@ ammo_to 27@ model_to 31@
+                            
+                            if
+                             27@ <= 0
+                            then
+                             break
+                            end
+						end  
+						0687: clear_actor $PLAYER_ACTOR task
+
+					    if 9@ <> 0
+					    then
+						 02EB: restore_camera_with_jumpcut
+						end
+                    end
+			    end			    
+            end 
+    end
