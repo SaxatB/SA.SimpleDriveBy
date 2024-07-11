@@ -1,6 +1,5 @@
 {$CLEO .cs}
 {$USE ini}
-{$USE cleo+}
 
 0000: 
 const   
@@ -19,7 +18,6 @@ then
     04ED: load_animation  "drivebys"
 end
 
-
 while true
     wait 0
     actor.Driving($player_actor)
@@ -28,55 +26,39 @@ while true
     0A97: 1@ = car 0@ struct
 
     if and
-    00DF:   actor $PLAYER_ACTOR driving
-    8241:   not player $PLAYER_CHAR in_remote_mode
-    then    
-        03C0: 25@ = store_car_char_is_in_no_save $PLAYER_ACTOR       
-        0EF9: get_car_animgroup 25@ store_to 23@
-        if and
-        not 23@ == 15 //coach 
-        not 23@ == 16 //bus   
-        not 23@ == 17 //dozer  
-        not 23@ == 18 //kart   
-        not 23@ == 23 //hover   
-        not 23@ == 24 //tank 
-        then  
-            if or
-            04C8:   actor $PLAYER_ACTOR driving_flying_vehicle 
-            04A7:   actor $PLAYER_ACTOR driving_boat
-            00DD:   actor $PLAYER_ACTOR driving_car_with_model 601 
+     00DF:   actor $PLAYER_ACTOR driving
+     84C8:   not actor $PLAYER_ACTOR driving_flying_vehicle 
+     84A7:   not actor $PLAYER_ACTOR driving_boat 
+     80DD:   not actor $PLAYER_ACTOR driving_car_with_id 432
+     80DD:   not actor $PLAYER_ACTOR driving_car_with_id 407
+     80DD:   not actor $PLAYER_ACTOR driving_car_with_id 601
+     8241:   not player $PLAYER_CHAR in_remote_mode
+     then    
+         03C0: 25@ = store_car_char_is_in_no_save $PLAYER_ACTOR
+        01EA: 24@ = car 25@ max_passengers
+        if 24@ > 0
+        then
+            01E9: 24@ = car 25@ num_passengers
+            if 24@ > 0
             then
-                goto @NoDriveBy
-            end
-        else
-            :NoDriveBy
-    		0A8C: write_memory 0x527862 size 2 value 0xC084 virtual_protect 1   //reenable CPad::GetLookLeft(void)
-            0A8C: write_memory 0x527894 size 2 value 0xC084 virtual_protect 1   //reenable CPad::GetLookRight(void)
-            while 00DF:   actor $PLAYER_ACTOR driving
-                wait 0
-                03C0: 24@ = store_car_char_is_in_no_save $PLAYER_ACTOR
-                if 803B:   not 24@ == 25@
-                then
-                    break
+                if 8431:   not car 25@ passenger_seat_free 0
+                then 
+                end    
+                if 8431:   not car 25@ passenger_seat_free 1
+                then 
                 end 
+                if 8431:   not car 25@ passenger_seat_free 2
+                then 
+                end
             end
-            continue
-        end  
-               
-        0E12: get_vehicle 25@ subclass_to 22@
-        if or
-        22@ == 3 //VEHICLE_HELI  
-        22@ == 4 //VEHICLE_PLANE 
-        22@ == 5 //VEHICLE_BOAT   
-        22@ == 6 //VEHICLE_TRAIN 
-        then
-            goto @NoDriveBy
-        end    
+        end
         
-        046C: 24@ = car 25@ driver
-        if 87D6:   not 24@ == $PLAYER_ACTOR
+        if and
+            04A7:   actor $PLAYER_ACTOR driving_boat
+            8241:   not player $PLAYER_CHAR in_remote_mode
         then
-            goto @NoDriveBy
+            0A8C: write_memory 0x527862 size 2 value 0xC084 virtual_protect 1  
+            0A8C: write_memory 0x527894 size 2 value 0xC084 virtual_protect 1
         end
         
 	    0A96: 24@ = actor $PLAYER_ACTOR struct
@@ -84,15 +66,15 @@ while true
         0A8D: 24@ = read_memory 24@ size 1 virtual_protect 1
         24@ += 1
 	    04B8: get_char_weapon_in_slot $PLAYER_ACTOR slot 24@ store_weapon_to 26@ ammo_to 27@ model_to 31@
-	    
-	    if 
-        24@ == 1
+        
+        if 
+         24@ == 1
         then
-            0A8C: write_memory 0x527862 size 2 value 0xC084 virtual_protect 1  
-            0A8C: write_memory 0x527894 size 2 value 0xC084 virtual_protect 1  
+        0A8C: write_memory 0x527862 size 2 value 0xC084 virtual_protect 1  //Enable Q and E 
+        0A8C: write_memory 0x527894 size 2 value 0xC084 virtual_protect 1   
         else
-            0A8C: write_memory 0x527862 size 2 value 0x9090 virtual_protect 1 
-            0A8C: write_memory 0x527894 size 2 value 0x9090 virtual_protect 1 
+        0A8C: write_memory 0x527862 size 2 value 0x9090 virtual_protect 1  //Disable Q and E
+        0A8C: write_memory 0x527894 size 2 value 0x9090 virtual_protect 1   
         end
         
             0AA6: call_method _setVehicleAtomicVisible struct 1@ num_params 1 pop 0 Door_lf_dummy
