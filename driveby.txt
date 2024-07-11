@@ -1,5 +1,8 @@
 {$CLEO .cs}
 {$USE ini}
+{$USE cleo+}
+wait 0
+wait 0
 
 0000: 
 const   
@@ -58,12 +61,22 @@ while true
             00DF:   actor $PLAYER_ACTOR driving
             8241:   not player $PLAYER_CHAR in_remote_mode
         then
+        03C0: 25@ = store_car_char_is_in_no_save $PLAYER_ACTOR
+        0EF9: get_car_animgroup 25@ store_to 23@
         if or 
             04A7:   actor $PLAYER_ACTOR driving_boat
-            80DD:   actor $PLAYER_ACTOR driving_boat_with_model 539
+             23@ == 15 //coach 
+             23@ == 16 //bus   
+             23@ == 17 //dozer  
+             23@ == 18 //kart   
+             23@ == 23 //hover   
+             23@ == 24 //tank
             then
+            while 00DF:   actor $PLAYER_ACTOR driving
+                wait 0
             0A8C: write_memory 0x527862 size 2 value 0xC084 virtual_protect 1  
             0A8C: write_memory 0x527894 size 2 value 0xC084 virtual_protect 1
+                end
             end
         end
         
