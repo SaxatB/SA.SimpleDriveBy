@@ -29,9 +29,10 @@ while true
      00DF:   actor $PLAYER_ACTOR driving
      84C8:   not actor $PLAYER_ACTOR driving_flying_vehicle 
      84A7:   not actor $PLAYER_ACTOR driving_boat 
-     80DD:   not actor $PLAYER_ACTOR driving_car_with_id 432
-     80DD:   not actor $PLAYER_ACTOR driving_car_with_id 407
-     80DD:   not actor $PLAYER_ACTOR driving_car_with_id 601
+     80DD:   not actor $PLAYER_ACTOR driving_car_with_model 432
+     80DD:   not actor $PLAYER_ACTOR driving_car_with_model 407
+     80DD:   not actor $PLAYER_ACTOR driving_car_with_model 416
+     80DD:   not actor $PLAYER_ACTOR driving_car_with_model 601
      8241:   not player $PLAYER_CHAR in_remote_mode
      then    
          03C0: 25@ = store_car_char_is_in_no_save $PLAYER_ACTOR
@@ -54,11 +55,16 @@ while true
         end
         
         if and
-            04A7:   actor $PLAYER_ACTOR driving_boat
+            00DF:   actor $PLAYER_ACTOR driving
             8241:   not player $PLAYER_CHAR in_remote_mode
         then
+        if or 
+            04A7:   actor $PLAYER_ACTOR driving_boat
+            80DD:   actor $PLAYER_ACTOR driving_boat_with_model 539
+            then
             0A8C: write_memory 0x527862 size 2 value 0xC084 virtual_protect 1  
             0A8C: write_memory 0x527894 size 2 value 0xC084 virtual_protect 1
+            end
         end
         
 	    0A96: 24@ = actor $PLAYER_ACTOR struct
