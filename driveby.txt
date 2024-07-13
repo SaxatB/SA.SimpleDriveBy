@@ -1,18 +1,17 @@
 {$CLEO .cs}
 {$USE ini}
 {$USE cleo+}
-wait 0
-wait 0
 
-0000: 
 const   
-Door_lf_dummy    =  10
-_setVehicleAtomicInvisible = 0x6D3080
-_setVehicleAtomicVisible   = 0x6D30B0
+    Door_lf_dummy    =  10
+    _setVehicleAtomicInvisible = 0x6D3080
+    _setVehicleAtomicVisible   = 0x6D30B0
 end
 
-0A8C: write_memory 0x522423 size 2 value 0x9090 virtual_protect 1  //camera rotate fix  
+// Camera rotate fix
+0A8C: write_memory 0x522423 size 2 value 0x9090 virtual_protect 1  
 
+// Read settings from ini file
 0AF0: 8@ = get_int_from_ini_file "cleo\driveby.ini" section "MAIN" key "DrivebyAimButton"
 0AF0: 9@ = get_int_from_ini_file "cleo\driveby.ini" section "MAIN" key "RestoreCameraAfterDriveby"
 0AF0: 31@ = get_int_from_ini_file "cleo\driveby.ini" section "MAIN" key "PreLoadIFP"
@@ -23,128 +22,117 @@ end
 
 while true
     wait 0
-    actor.Driving($player_actor)
-    jf continue
-    0@ = actor.CurrentCar($player_actor)
-    0A97: 1@ = car 0@ struct
+    if 
+        00DF: actor $PLAYER_ACTOR driving 
+    then
+        0@ = actor.CurrentCar($PLAYER_ACTOR)
+        0A97: 1@ = car 0@ struct
 
-    if and
-     00DF:   actor $PLAYER_ACTOR driving
-     84C8:   not actor $PLAYER_ACTOR driving_flying_vehicle 
-     84A7:   not actor $PLAYER_ACTOR driving_boat 
-     80DD:   not actor $PLAYER_ACTOR driving_car_with_model 432
-     80DD:   not actor $PLAYER_ACTOR driving_car_with_model 407
-     80DD:   not actor $PLAYER_ACTOR driving_car_with_model 416
-     80DD:   not actor $PLAYER_ACTOR driving_car_with_model 601
-     8241:   not player $PLAYER_CHAR in_remote_mode
-     then    
-         03C0: 25@ = store_car_char_is_in_no_save $PLAYER_ACTOR
-        01EA: 24@ = car 25@ max_passengers
-        if 24@ > 0
-        then
-            01E9: 24@ = car 25@ num_passengers
+        if and
+            00DF: actor $PLAYER_ACTOR driving
+            84C8: not actor $PLAYER_ACTOR driving_flying_vehicle 
+            84A7: not actor $PLAYER_ACTOR driving_boat 
+            80DD: not actor $PLAYER_ACTOR driving_car_with_model 432
+            80DD: not actor $PLAYER_ACTOR driving_car_with_model 407
+            80DD: not actor $PLAYER_ACTOR driving_car_with_model 416
+            80DD: not actor $PLAYER_ACTOR driving_car_with_model 601
+            8241: not player $PLAYER_CHAR in_remote_mode
+        then    
+            03C0: 25@ = store_car_char_is_in_no_save $PLAYER_ACTOR
+            01EA: 24@ = car 25@ max_passengers
             if 24@ > 0
             then
-                if 8431:   not car 25@ passenger_seat_free 0
-                then 
-                end    
-                if 8431:   not car 25@ passenger_seat_free 1
-                then 
-                end 
-                if 8431:   not car 25@ passenger_seat_free 2
-                then 
+                01E9: 24@ = car 25@ num_passengers
+                if 24@ > 0
+                then
+                    if 8431: not car 25@ passenger_seat_free 0 then end
+                    if 8431: not car 25@ passenger_seat_free 1 then end 
+                    if 8431: not car 25@ passenger_seat_free 2 then end
                 end
             end
-        end
-        
-        if and
-            00DF:   actor $PLAYER_ACTOR driving
-            8241:   not player $PLAYER_CHAR in_remote_mode
-        then
-        03C0: 25@ = store_car_char_is_in_no_save $PLAYER_ACTOR
-        0EF9: get_car_animgroup 25@ store_to 23@
-        if or 
-            04A7:   actor $PLAYER_ACTOR driving_boat
-             23@ == 15 //coach 
-             23@ == 16 //bus   
-             23@ == 17 //dozer  
-             23@ == 18 //kart   
-             23@ == 23 //hover   
-             23@ == 24 //tank
+
+            if and
+                00DF: actor $PLAYER_ACTOR driving
+                8241: not player $PLAYER_CHAR in_remote_mode
             then
-            while 00DF:   actor $PLAYER_ACTOR driving
-                wait 0
-            0A8C: write_memory 0x527862 size 2 value 0xC084 virtual_protect 1  
-            0A8C: write_memory 0x527894 size 2 value 0xC084 virtual_protect 1
+                03C0: 25@ = store_car_char_is_in_no_save $PLAYER_ACTOR
+                0EF9: get_car_animgroup 25@ store_to 23@
+                if or 
+                    04A7: actor $PLAYER_ACTOR driving_boat
+                    23@ == 15 // coach 
+                    23@ == 16 // bus   
+                    23@ == 17 // dozer  
+                    23@ == 18 // kart   
+                    23@ == 23 // hover   
+                    23@ == 24 // tank
+                then
+                    while 00DF: actor $PLAYER_ACTOR driving
+                        wait 0
+                        0A8C: write_memory 0x527862 size 2 value 0xC084 virtual_protect 1  
+                        0A8C: write_memory 0x527894 size 2 value 0xC084 virtual_protect 1
+                    end
                 end
             end
-        end
-        
-	    0A96: 24@ = actor $PLAYER_ACTOR struct
-        000A: 24@ += 0x718 //[byte] Current weapon slot (1 byte)
-        0A8D: 24@ = read_memory 24@ size 1 virtual_protect 1
-        24@ += 1
-	    04B8: get_char_weapon_in_slot $PLAYER_ACTOR slot 24@ store_weapon_to 26@ ammo_to 27@ model_to 31@
-        
-        if 
-         24@ == 1
-        then
-        0A8C: write_memory 0x527862 size 2 value 0xC084 virtual_protect 1  //Enable Q and E 
-        0A8C: write_memory 0x527894 size 2 value 0xC084 virtual_protect 1   
-        else
-        0A8C: write_memory 0x527862 size 2 value 0x9090 virtual_protect 1  //Disable Q and E
-        0A8C: write_memory 0x527894 size 2 value 0x9090 virtual_protect 1   
-        end
-        
+
+            0A96: 24@ = actor $PLAYER_ACTOR struct
+            000A: 24@ += 0x718 //[byte] Current weapon slot (1 byte)
+            0A8D: 24@ = read_memory 24@ size 1 virtual_protect 1
+            24@ += 1
+            04B8: get_char_weapon_in_slot $PLAYER_ACTOR slot 24@ store_weapon_to 26@ ammo_to 27@ model_to 31@
+
+            if 24@ == 1
+            then
+                0A8C: write_memory 0x527862 size 2 value 0xC084 virtual_protect 1  // Enable Q and E 
+                0A8C: write_memory 0x527894 size 2 value 0xC084 virtual_protect 1   
+            else
+                0A8C: write_memory 0x527862 size 2 value 0x9090 virtual_protect 1  // Disable Q and E
+                0A8C: write_memory 0x527894 size 2 value 0x9090 virtual_protect 1   
+            end
+
             0AA6: call_method _setVehicleAtomicVisible struct 1@ num_params 1 pop 0 Door_lf_dummy
-	            if
-	             0AB0:  key_pressed 8@
-	            then
-	             if
-	             047A:   actor $PLAYER_ACTOR driving_bike
-	             then
-	             09C4: set_petrol_tank_weakpoint 25@ to false // Disables hitting petrol tank
-	             end
-                 0A96: 24@ = actor $PLAYER_ACTOR struct
-                 000A: 24@ += 0x718 //[byte] Current weapon slot (1 byte)
-                 0A8D: 24@ = read_memory 24@ size 1 virtual_protect 1
-                 24@ += 1
-	             04B8: get_char_weapon_in_slot $PLAYER_ACTOR slot 24@ store_weapon_to 26@ ammo_to 27@ model_to 31@
-                  
-					if and
-					27@ > 0
-					24@ == 5  // SMG Slot
-					then
-					0713: task_drive_by $PLAYER_ACTOR char -1 car -1 coord 0 0 0 radius 900.0 style 4 from_rhs 0 fire_rate 100				
+            if 0AB0: key_pressed 8@
+            then
+                if 047A: actor $PLAYER_ACTOR driving_bike
+                then
+                    09C4: set_petrol_tank_weakpoint 25@ to false // Disable hitting petrol tank
+                end
 
-						while true
-						wait 0
-							if and 
-								8AB0: not key_pressed 8@
-                                0AA6: call_method _setVehicleAtomicInvisible struct 1@ num_params 1 pop 0 Door_lf_dummy 
-                                then
-								break
-							end
-							
-							0A96: 24@ = actor $PLAYER_ACTOR struct
- 				            000A: 24@ += 0x718 //[byte] Current weapon slot (1 byte)
- 				            0A8D: 24@ = read_memory 24@ size 1 virtual_protect 1
-  				            24@ += 1
-					        04B8: get_char_weapon_in_slot $PLAYER_ACTOR slot 24@ store_weapon_to 26@ ammo_to 27@ model_to 31@
-                            
-                            if
-                             27@ <= 0
-                            then
-                             break
-                            end
-						end  
-						0687: clear_actor $PLAYER_ACTOR task
+                0A96: 24@ = actor $PLAYER_ACTOR struct
+                000A: 24@ += 0x718 //[byte] Current weapon slot (1 byte)
+                0A8D: 24@ = read_memory 24@ size 1 virtual_protect 1
+                24@ += 1
+                04B8: get_char_weapon_in_slot $PLAYER_ACTOR slot 24@ store_weapon_to 26@ ammo_to 27@ model_to 31@
 
-					    if 9@ <> 0
-					    then
-						 02EB: restore_camera_with_jumpcut
-						end
+                if and
+                    27@ > 0
+                    24@ == 5  // SMG Slot
+                then
+                    0713: task_drive_by $PLAYER_ACTOR char -1 car -1 coord 0 0 0 radius 900.0 style 4 from_rhs 0 fire_rate 100				
+
+                    while 0AB0: key_pressed 8@
+                        wait 0
+                        0AA6: call_method _setVehicleAtomicInvisible struct 1@ num_params 1 pop 0 Door_lf_dummy 
+
+                        0A96: 24@ = actor $PLAYER_ACTOR struct
+                        000A: 24@ += 0x718 //[byte] Current weapon slot (1 byte)
+                        0A8D: 24@ = read_memory 24@ size 1 virtual_protect 1
+                        24@ += 1
+                        04B8: get_char_weapon_in_slot $PLAYER_ACTOR slot 24@ store_weapon_to 26@ ammo_to 27@ model_to 31@
+
+                        if 27@ <= 0 
+                        then 
+                        break 
+                        end
+                    end  
+
+                    0687: clear_actor $PLAYER_ACTOR task
+
+                    if 9@ <> 0 
+                    then 
+                    02EB: restore_camera_with_jumpcut 
                     end
-			    end			    
-            end 
+                end
+            end			    
+        end 
     end
+end
